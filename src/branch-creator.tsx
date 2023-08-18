@@ -9,7 +9,7 @@ import SettingsDocument from "./settingsDocument";
 
 export class BranchCreator {
 
-    public async createBranch(workItemId: number, repositoryId: string, repositoryName: string, project: IProjectInfo, gitBaseUrl: string): Promise<void> {
+    public async createBranch(workItemId: number, repositoryId: string, repositoryName: string, baseBranchName: string, project: IProjectInfo, gitBaseUrl: string): Promise<void> {
         const navigationService = await SDK.getService<IHostNavigationService>(CommonServiceIds.HostNavigationService);
         const globalMessagesSvc = await SDK.getService<IGlobalMessagesService>(CommonServiceIds.GlobalMessagesService);
         const gitRestClient = getClient(GitRestClient);
@@ -34,13 +34,13 @@ export class BranchCreator {
             return;
         }
 
-        const defaultBranch = (await gitRestClient.getBranches(repositoryId, project.name)).find((x) => x.isBaseVersion);
-        if (!defaultBranch) {
-            console.warn(`Default branch ${branchName} not found`);
+        const baseBranch = (await gitRestClient.getBranches(repositoryId, project.name)).find((x)=> x.name == baseBranchName);
+        if(!baseBranch) {
+            console.warn(`The branch ${baseBranchName} not found`);
             return;
         }
 
-        await this.createRef(gitRestClient, repositoryId, defaultBranch.commit.commitId, branchName);
+        await this.createRef(gitRestClient, repositoryId, baseBranch.commit.commitId, branchName);
         await this.linkBranchToWorkItem(workItemTrackingRestClient, project.id, repositoryId, workItemId, branchName);
         await this.updateWorkItemState(workItemTrackingRestClient, settingsDocument, project.id, workItemId);
         console.log(`Branch ${branchName} created in repository ${repositoryName}`);

@@ -25,9 +25,10 @@ function createBranchFromWorkItem() {
             const branchCreator = new BranchCreator();
             const gitRestClient = getClient(GitRestClient);
             const repositories = await gitRestClient.getRepositories(project.name);
-            if (repositories.length === 1) {
+            const branches = await gitRestClient.getBranches(repositories[0].id, project.name);
+            if (repositories.length === 1 && branches.length === 1) {
                 getWorkItemIds(actionContext).forEach((id: number) => {
-                    branchCreator.createBranch(id, repositories[0].id, repositories[0].name, project, gitBaseUrl);
+                    branchCreator.createBranch(id, repositories[0].id, repositories[0].name, branches[0].name, project, gitBaseUrl);
                 });
             }
             else {
@@ -41,9 +42,9 @@ function createBranchFromWorkItem() {
                         workItems: workItems
                     },
                     onClose: (result: ISelectRepositoryResult | undefined) => {
-                        if (result !== undefined && result.repositoryId !== undefined && result.repositoryName !== undefined) {
+                        if (result !== undefined && result.repositoryId !== undefined && result.repositoryName !== undefined && result.branchName !== undefined) {
                             workItems.forEach((id: number) => {
-                                branchCreator.createBranch(id, result.repositoryId!, result.repositoryName!, project, gitBaseUrl);
+                                branchCreator.createBranch(id, result.repositoryId!, result.repositoryName!, result.branchName!, project, gitBaseUrl);
                             });
                         }
                     }
